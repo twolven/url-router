@@ -1,0 +1,35 @@
+{
+  "defaultBrowser": "edge",
+  "browsers": {
+    "edge": {
+      "executable": "auto:edge",
+      "arguments": []
+    },
+    "brave": {
+      "executable": "auto:brave",
+      "arguments": []
+    },
+    "chrome-work": {
+      "executable": "auto:chrome",
+      "arguments": ["--profile-directory=Profile 1"]
+    },
+    "firefox": {
+      "executable": "auto:firefox",
+      "arguments": []
+    }
+  },
+  "rules": [
+    {
+      "scheme": "https",
+      "host": "github.com",
+      "pathPrefix": "/example-org",
+      "browser": "chrome-work"
+    },
+    {
+      "scheme": "https",
+      "host": "portal.example.com",
+      "pathPrefix": "/",
+      "browser": "firefox"
+    }
+  ]
+}

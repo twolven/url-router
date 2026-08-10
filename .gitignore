@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+artifacts/
+publish/
+rules.json
+errors.log
+*.user
+*.suo
+.vs/
+.idea/

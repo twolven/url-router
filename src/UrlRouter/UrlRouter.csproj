@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <AssemblyName>UrlRouter</AssemblyName>
+    <RootNamespace>UrlRouter</RootNamespace>
+    <ApplicationIcon>..\..\assets\url-router.ico</ApplicationIcon>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Authors>twolven</Authors>
+    <Description>Routes external URLs to configurable browsers and profiles.</Description>
+    <RepositoryUrl>https://github.com/twolven/url-router</RepositoryUrl>
+  </PropertyGroup>
+</Project>
