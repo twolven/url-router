@@ -6,6 +6,7 @@ URL Router is a small, local-only Windows protocol handler that opens different 
 - Route by exact scheme, hostname, and path-segment prefix
 - Use any number of browsers and browser profiles
 - Automatically discover Chrome, Brave, Edge, and Firefox
+- Match the real destination inside Microsoft Teams and Outlook Safe Links wrappers
 - Use arbitrary browser executables and command-line arguments
 - Keep unmatched links in a configurable fallback browser
 - Install per-user without administrator privileges
@@ -54,6 +55,8 @@ The installed configuration is `%LOCALAPPDATA%\Programs\UrlRouter\rules.json`. A
 Built-in discovery aliases are `auto:chrome`, `auto:brave`, `auto:edge`, and `auto:firefox`. For any other browser, set `executable` to an absolute path. Environment variables such as `%LOCALAPPDATA%` are expanded.
 
 Matching is structural rather than a raw string prefix. Hostnames must match exactly, and `/example-org` matches that path segment and descendants but not `/example-organization`. Lookalike domains such as `github.com.evil.example` do not match `github.com`.
+
+For allowlisted Microsoft Teams and Outlook Safe Links wrapper hosts, URL Router locally decodes the `url` query parameter for rule matching. It still sends the original wrapper URL to the selected browser, preserving Microsoft's reputation check. It never follows redirects or contacts the wrapper itself.
 
 ## Test a rule
 

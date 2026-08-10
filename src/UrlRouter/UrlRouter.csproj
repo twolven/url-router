@@ -1,11 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>WinExe</OutputType>
     <TargetFramework>net9.0-windows</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
+    <PublishAot>true</PublishAot>
+    <StripSymbols>true</StripSymbols>
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
     <AssemblyName>UrlRouter</AssemblyName>
@@ -17,5 +20,6 @@
     <Authors>twolven</Authors>
     <Description>Routes external URLs to configurable browsers and profiles.</Description>
     <RepositoryUrl>https://github.com/twolven/url-router</RepositoryUrl>
+    <OS Condition="'$(OS)' == ''">Windows_NT</OS>
   </PropertyGroup>
 </Project>

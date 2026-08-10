@@ -1,16 +1,14 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Win32;
 
 return Router.Run(args);
 
 internal static class Router
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true
-    };
-
     public static int Run(string[] args)
     {
         if (args.Length == 0)
@@ -38,10 +36,11 @@ internal static class Router
             if (!File.Exists(configPath))
                 throw new FileNotFoundException("Configuration not found. Create rules.json beside UrlRouter.exe.", configPath);
 
-            var config = JsonSerializer.Deserialize<RouterConfig>(File.ReadAllText(configPath), JsonOptions)
+            var config = JsonSerializer.Deserialize(File.ReadAllText(configPath), RouterJsonContext.Default.RouterConfig)
                 ?? throw new InvalidOperationException("rules.json is empty.");
 
-            var browserName = config.Rules.FirstOrDefault(rule => rule.Matches(uri))?.Browser
+            var routingUri = SafeLinkUnwrapper.GetRoutingUri(uri);
+            var browserName = config.Rules.FirstOrDefault(rule => rule.Matches(routingUri))?.Browser
                 ?? config.DefaultBrowser;
 
             if (string.IsNullOrWhiteSpace(browserName))
@@ -54,7 +53,9 @@ internal static class Router
 
             if (testOnly)
             {
-                Console.WriteLine($"{browserName}: {executable} {string.Join(' ', browser.Arguments)}".TrimEnd());
+                var decision = $"{browserName}: {executable} {string.Join(' ', browser.Arguments)}".TrimEnd();
+                NativeConsole.WriteLine(decision);
+                WriteTestOutput(decision);
                 return 0;
             }
 
@@ -99,6 +100,13 @@ internal static class Router
     }
 
     private static string Redact(string value) => value.Length <= 120 ? value : value[..120] + "...";
+
+    private static void WriteTestOutput(string decision)
+    {
+        var path = Environment.GetEnvironmentVariable("URLROUTER_TEST_OUTPUT");
+        if (!string.IsNullOrWhiteSpace(path))
+            File.WriteAllText(path, decision);
+    }
 }
 
 internal static class BrowserResolver
@@ -191,6 +199,68 @@ internal static class BrowserResolver
     private sealed record BrowserDefinition(string ExecutableName, string[] Candidates);
 }
 
+internal static class SafeLinkUnwrapper
+{
+    public static Uri GetRoutingUri(Uri outerUri)
+    {
+        if (!IsKnownWrapper(outerUri))
+            return outerUri;
+
+        foreach (var pair in outerUri.Query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var separator = pair.IndexOf('=');
+            if (separator < 0)
+                continue;
+
+            var key = Uri.UnescapeDataString(pair[..separator].Replace('+', ' '));
+            if (!key.Equals("url", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var value = Uri.UnescapeDataString(pair[(separator + 1)..].Replace('+', ' '));
+            if (Uri.TryCreate(value, UriKind.Absolute, out var target) &&
+                (target.Scheme == Uri.UriSchemeHttp || target.Scheme == Uri.UriSchemeHttps))
+                return target;
+        }
+
+        return outerUri;
+    }
+
+    private static bool IsKnownWrapper(Uri uri)
+    {
+        if (uri.IdnHost.Equals("teams.public.onecdn.static.microsoft", StringComparison.OrdinalIgnoreCase) &&
+            uri.AbsolutePath.Equals("/evergreen-assets/safelinks/2/atp-safelinks.html", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return uri.IdnHost.Equals("safelinks.protection.outlook.com", StringComparison.OrdinalIgnoreCase) ||
+               uri.IdnHost.EndsWith(".safelinks.protection.outlook.com", StringComparison.OrdinalIgnoreCase);
+    }
+}
+
+internal static partial class NativeConsole
+{
+    private const int StandardOutputHandle = -11;
+
+    public static void WriteLine(string value)
+    {
+        AttachConsole(unchecked((uint)-1));
+        var bytes = Encoding.UTF8.GetBytes(value + Environment.NewLine);
+        var handle = GetStdHandle(StandardOutputHandle);
+        if (handle != IntPtr.Zero && handle != new IntPtr(-1))
+            WriteFile(handle, bytes, bytes.Length, out _, IntPtr.Zero);
+    }
+
+    [LibraryImport("kernel32.dll")]
+    private static partial IntPtr GetStdHandle(int standardHandle);
+
+    [LibraryImport("kernel32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool AttachConsole(uint processId);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool WriteFile(IntPtr file, byte[] buffer, int bytesToWrite, out int bytesWritten, IntPtr overlapped);
+}
+
 internal sealed class RouterConfig
 {
     public string DefaultBrowser { get; init; } = "";
@@ -225,3 +295,7 @@ internal sealed class RouteRule
                uri.AbsolutePath.StartsWith(normalizedPrefix + "/", StringComparison.OrdinalIgnoreCase);
     }
 }
+
+[JsonSourceGenerationOptions(PropertyNameCaseInsensitive = true)]
+[JsonSerializable(typeof(RouterConfig))]
+internal partial class RouterJsonContext : JsonSerializerContext;
