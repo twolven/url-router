@@ -86,6 +86,10 @@ URL Router parses URLs locally and never contacts a server. Successful URLs are 
 
 Browser processes are launched with .NET's argument-list API rather than concatenated shell commands. Rules compare parsed URI components to prevent hostname-prefix and user-info lookalikes.
 
+## Author
+
+[Todd Wolven](https://toddwolven.com/) - Lead AI Software Developer and open-source GenAI engineer
+
 ## License
 
 [MIT](LICENSE). Copyright © 2026 [twolven](https://github.com/twolven). Redistributions must retain the copyright and license notice.
